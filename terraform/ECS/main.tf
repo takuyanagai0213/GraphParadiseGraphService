@@ -179,22 +179,6 @@ resource "aws_security_group" "alb" {
     Name = "app-alb"
   }
 }
-
-# SecurityGroup Rule
-# https://www.terraform.io/docs/providers/aws/r/security_group.html
-resource "aws_security_group_rule" "alb_http" {
-  security_group_id = aws_security_group.alb.id
-
-  # セキュリティグループ内のリソースへインターネットからのアクセスを許可する
-  type = "ingress"
-
-  from_port = 80
-  to_port   = 80
-  protocol  = "tcp"
-
-  cidr_blocks = ["0.0.0.0/0"]
-}
-
 # ALB
 # https://www.terraform.io/docs/providers/aws/d/lb.html
 resource "aws_lb" "main" {
@@ -203,48 +187,6 @@ resource "aws_lb" "main" {
 
   security_groups = ["${aws_security_group.alb.id}"]
   subnets         = ["${aws_subnet.public_1c.id}","${aws_subnet.public_1a.id}"]
-}
-
-# Listener
-# https://www.terraform.io/docs/providers/aws/r/lb_listener.html
-resource "aws_lb_listener" "main" {
-  # HTTPでのアクセスを受け付ける
-  port     = "80"
-  protocol = "HTTP"
-
-  # ALBのarnを指定します。
-  #XXX: arnはAmazon Resource Names の略で、その名の通りリソースを特定するための一意な名前(id)です。
-  load_balancer_arn = aws_lb.main.arn
-
-  # "ok" という固定レスポンスを設定する
-  default_action {
-    type = "fixed-response"
-
-    fixed_response {
-      content_type = "text/plain"
-      status_code  = "200"
-      message_body = "ok"
-    }
-  }
-}
-# ALB Listener Rule
-# https://www.terraform.io/docs/providers/aws/r/lb_listener_rule.html
-resource "aws_lb_listener_rule" "main" {
-  # ルールを追加するリスナー
-  listener_arn = aws_lb_listener.main.arn
-
-  # 受け取ったトラフィックをターゲットグループへ受け渡す
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.main.id
-  }
-
-  # ターゲットグループへ受け渡すトラフィックの条件
-  condition {
-    path_pattern {
-      values = ["*"]
-    }
-  }
 }
 # SecurityGroup
 # https://www.terraform.io/docs/providers/aws/r/security_group.html
@@ -298,9 +240,9 @@ resource "aws_ecs_service" "main" {
   name = "go-service"
 
   # 依存関係の記述。
-  # "aws_lb_listener_rule.main" リソースの作成が完了するのを待ってから当該リソースの作成を開始する。
+  # "aws_lb_listener_rule.http_to_https" リソースの作成が完了するのを待ってから当該リソースの作成を開始する。
   # "depends_on" は "aws_ecs_service" リソース専用のプロパティではなく、Terraformのシンタックスのため他の"resource"でも使用可能
-  depends_on = ["aws_lb_listener_rule.main"]
+  depends_on = ["aws_lb_listener_rule.http_to_https"]
 
   # 当該ECSサービスを配置するECSクラスターの指定
   cluster = aws_ecs_cluster.main.name
@@ -330,4 +272,128 @@ resource "aws_ecs_service" "main" {
     container_name   = "web"
     container_port   = "80"
   }
+}
+variable "domain" {
+  description = "Route 53 で管理しているドメイン名"
+  type        = string
+
+  #FIXME:
+  default = "www.graph-paradise.com"
+}
+
+# Route53 Hosted Zone
+# https://www.terraform.io/docs/providers/aws/d/route53_zone.html
+data "aws_route53_zone" "main" {
+  name         = "graph-paradise.com"
+  private_zone = false
+}
+
+# ACM
+# https://www.terraform.io/docs/providers/aws/r/acm_certificate.html
+resource "aws_acm_certificate" "main" {
+  domain_name = "graph-paradise.com"
+
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Route53 record
+# https://www.terraform.io/docs/providers/aws/r/route53_record.html
+resource "aws_route53_record" "validation" {
+  depends_on = ["aws_acm_certificate.main"]
+
+  zone_id = "${data.aws_route53_zone.main.id}"
+
+  ttl = 60
+  for_each = {
+    for dvo in aws_acm_certificate.main.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  type            = each.value.type
+}
+
+# ACM Validate
+# https://www.terraform.io/docs/providers/aws/r/acm_certificate_validation.html
+resource "aws_acm_certificate_validation" "main" {
+  certificate_arn = "${aws_acm_certificate.main.arn}"
+
+  validation_record_fqdns = [for record in aws_route53_record.validation : record.fqdn]
+}
+
+# Route53 record
+# https://www.terraform.io/docs/providers/aws/r/route53_record.html
+resource "aws_route53_record" "main" {
+  type = "A"
+
+  name    = "graph-paradise.com"
+  zone_id = "${data.aws_route53_zone.main.id}"
+
+  alias {
+    name                   = "${aws_lb.main.dns_name}"
+    zone_id                = "${aws_lb.main.zone_id}"
+    evaluate_target_health = true
+  }
+}
+
+# ALB Listener
+# https://www.terraform.io/docs/providers/aws/r/lb_listener.html
+resource "aws_lb_listener" "https" {
+  load_balancer_arn = "${aws_lb.main.arn}"
+
+  certificate_arn = "${aws_acm_certificate.main.arn}"
+
+  port     = "443"
+  protocol = "HTTPS"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = "${aws_lb_target_group.main.id}"
+  }
+}
+
+# ALB Listener Rule
+# https://www.terraform.io/docs/providers/aws/r/lb_listener_rule.html
+resource "aws_lb_listener_rule" "http_to_https" {
+  listener_arn = "${aws_lb_listener.https.arn}"
+
+  priority = 99
+
+  action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+
+  condition {
+    path_pattern {
+      values = ["graph-paradise.com"]
+    }
+  }
+}
+
+# Security Group Rule
+# https://www.terraform.io/docs/providers/aws/r/security_group_rule.html
+resource "aws_security_group_rule" "alb_https" {
+  security_group_id = "${aws_security_group.alb.id}"
+
+  type = "ingress"
+
+  from_port = 443
+  to_port   = 443
+  protocol  = "tcp"
+
+  cidr_blocks = ["0.0.0.0/0"]
 }
