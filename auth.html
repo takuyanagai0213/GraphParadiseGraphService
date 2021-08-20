@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
   <style>
     .box {
       display: inline-block;
@@ -11,27 +12,44 @@
   </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="wrapper site-header__wrapper">
-      <a href="#" class="brand">Brand</a>
-      <nav class="nav">
-        <button class="nav__toggle" aria-expanded="false" type="button">
-          menu
-        </button>
-        <ul class="nav__wrapper">
-          <li class="nav__item"><a href="#">Home</a></li>
-          <li class="nav__item"><a href="#">Home</a></li>
-          <li class="nav__item"><a href="#">About</a></li>
-        </ul>
-      </nav>
+  <section class="hero is-primary is-fullheight">
+    <div class="hero-body">
+      <div class="container">
+        <div class="columns is-centered">
+          <div class="column is-5-tablet is-4-desktop is-3-widescreen">
+            <form action="/login" method="post" class="box">
+              <div class="field">
+                <label for="" class="label">Email</label>
+                <div class="control has-icons-left">
+                  <input type="text" placeholder="e.g. bobsmith@gmail.com" class="input" required name="username">
+                  <span class="icon is-small is-left">
+                    <i class="fa fa-envelope"></i>
+                  </span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="" class="label">Password</label>
+                <div class="control has-icons-left">
+                  <input type="password" placeholder="*******" class="input" required name="password">
+                  <span class="icon is-small is-left">
+                    <i class="fa fa-lock"></i>
+                  </span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="" class="checkbox">
+                  <input type="checkbox">
+                 Remember me
+                </label>
+              </div>
+              <div class="field">
+                <input type="submit" value="ログイン" class="button is-success">
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
-  </header>
-  <div class="container">
-    <form action="/login" method="post">
-      ユーザ名:<input type="text" name="username">
-      パスワード:<input type="password" name="password">
-      <input type="submit" value="ログイン">
-     </form>
-  </div>
+  </section>
 </body>
 </html>
