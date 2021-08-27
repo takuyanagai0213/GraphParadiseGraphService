@@ -7,7 +7,7 @@ services:
     volumes: 
       - ./graph:/app/go
     ports:
-      - 90:80
+      - 100:80
     tty: true
     depends_on: 
       - mysql
