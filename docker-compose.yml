@@ -9,22 +9,22 @@ services:
     ports:
       - 90:80
     tty: true
-#     depends_on: 
-#       - mysql
-#   mysql:
-#       build: ./docker/db
-#       image: mysql:5.7
-#       # restart: always
-#       environment:
-#         MYSQL_ROOT_PASSWORD: password
-#         MYSQL_DATABASE: sample
-#       hostname: mysql
-#       ports: 
-#         - "3306:3306"
-#       command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --skip-character-set-client-handshake
-#       volumes:
-#         - ./docker/db/conf.d:/etc/mysql/conf.d
-#         - ./docker/db/log/mysql:/var/log/mysql
-# volumes:
-#   db-data:
-#     driver: local
+    depends_on: 
+      - mysql
+  mysql:
+      build: ./docker/db
+      image: mysql:5.7
+      # restart: always
+      environment:
+        MYSQL_ROOT_PASSWORD: password
+        MYSQL_DATABASE: sample
+      hostname: mysql
+      ports: 
+        - "3306:3306"
+      command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --skip-character-set-client-handshake
+      volumes:
+        - ./docker/db/conf.d:/etc/mysql/conf.d
+        - ./docker/db/log/mysql:/var/log/mysql
+volumes:
+  db-data:
+    driver: local
