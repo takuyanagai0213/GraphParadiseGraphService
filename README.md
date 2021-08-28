@@ -16,6 +16,7 @@ GraphParadise は、以下のことができます。
 - JavaScript
 - docker（開発環境・本番環境に導入）
 - AWS (IAM, VPC, ECR, Fargate, ECS, EKS, ALB, Route53, ACM)
+- gRPC(マイクロサービス間通信)
 - jQuery
 - Github Actions(CI/CD)
 - Terraform(インフラのコード化)
