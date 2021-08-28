@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "/;user";
+
+message User {
+  string Name = 2;
+  string Password = 3;
+  string Area = 4;
+}
+message ListUserRequest {
+}
+
+message ListUserResponse {
+  string Name = 1;
+}
+
+service UserService {
+  rpc Search(ListUserRequest) returns (ListUserResponse);
+}
