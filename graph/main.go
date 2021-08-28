@@ -9,6 +9,8 @@ import (
 
 	// "github.com/jinzhu/gorm"
 	"graph_paradise/grpc/user"
+
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -25,14 +27,14 @@ func main() {
 	// http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(dir+"/static/"))))
 	// port
 	// http.ListenAndServe(":80", nil)
-	conn, err := grpc.Dial("127.0.0.1:90", grpc.WithInsecure())
+	conn, err := grpc.Dial("host.docker.internal:50051", grpc.WithInsecure())
 	if err != nil {
 		log.Fatal("client connection error:", err)
 	}
 	defer conn.Close()
-	client := user.NewCatClient(conn)
-	message := &user.GetName{User: "takuya"}
-	res, err := client.GetMyCat(context.TODO(), message)
+	client := user.NewUserServiceClient(conn)
+	message := &user.ListUserRequest{}
+	res, err := client.Search(context.TODO(), message)
 	fmt.Printf("result:%#v \n", res)
 	fmt.Printf("error::%#v \n", err)
 }
