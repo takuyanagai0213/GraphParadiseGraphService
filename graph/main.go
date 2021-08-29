@@ -36,6 +36,10 @@ func main() {
 	message := &user.ReadUserRequest{Name: "takuya"}
 	res, err := client.ReadUser(context.TODO(), message)
 	fmt.Println(res)
+
+	all_user := &user.ListUserRequest{Name: "takuya"}
+	all_user_res, err := client.ReadUser(context.TODO(), all_user)
+	fmt.Println(all_user_res)
 	fmt.Printf("error::%#v \n", err)
 }
 
