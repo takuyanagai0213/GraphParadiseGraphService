@@ -27,4 +27,5 @@ message ListUserResponse {
 
 service UserService {
   rpc ReadUser(ReadUserRequest) returns (ReadUserResponse);
+  rpc ListUser(ListUserRequest) returns (ListUserResponse);
 }

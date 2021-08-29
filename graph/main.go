@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	// "github.com/jinzhu/gorm"
-	"graph_paradise/grpc/user"
+	"graph_paradise/grpc/userservice"
 
 	"google.golang.org/grpc"
 )
@@ -32,13 +32,13 @@ func main() {
 		log.Fatal("client connection error:", err)
 	}
 	defer conn.Close()
-	client := user.NewUserServiceClient(conn)
-	message := &user.ReadUserRequest{Name: "takuya"}
+	client := userservice.NewUserServiceClient(conn)
+	message := &userservice.ReadUserRequest{Name: "takuya"}
 	res, err := client.ReadUser(context.TODO(), message)
 	fmt.Println(res)
 
-	all_user := &user.ListUserRequest{Name: "takuya"}
-	all_user_res, err := client.ReadUser(context.TODO(), all_user)
+	all_user := &userservice.ListUserRequest{}
+	all_user_res, err := client.ListUser(context.TODO(), all_user)
 	fmt.Println(all_user_res)
 	fmt.Printf("error::%#v \n", err)
 }
