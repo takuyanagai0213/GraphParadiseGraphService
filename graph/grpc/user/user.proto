@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package user;
+package userservice;
 
-option go_package = "/;user";
+option go_package = "/;userservice";
 
 message User {
   string Name = 2;
@@ -22,7 +22,7 @@ message ListUserRequest {
 }
 
 message ListUserResponse {
-  string Name = 1;
+  repeated User user=1;
 }
 
 service UserService {
