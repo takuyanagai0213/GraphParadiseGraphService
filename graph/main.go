@@ -33,9 +33,9 @@ func main() {
 	}
 	defer conn.Close()
 	client := user.NewUserServiceClient(conn)
-	message := &user.ListUserRequest{}
-	res, err := client.Search(context.TODO(), message)
-	fmt.Printf("result:%#v \n", res)
+	message := &user.ReadUserRequest{Name: "takuya"}
+	res, err := client.ReadUser(context.TODO(), message)
+	fmt.Println(res)
 	fmt.Printf("error::%#v \n", err)
 }
 

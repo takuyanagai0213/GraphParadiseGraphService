@@ -9,6 +9,15 @@ message User {
   string Password = 3;
   string Area = 4;
 }
+
+message ReadUserRequest{
+    string name = 1;
+}
+
+message ReadUserResponse {
+    User user = 1;
+}
+
 message ListUserRequest {
 }
 
@@ -17,5 +26,5 @@ message ListUserResponse {
 }
 
 service UserService {
-  rpc Search(ListUserRequest) returns (ListUserResponse);
+  rpc ReadUser(ReadUserRequest) returns (ReadUserResponse);
 }
